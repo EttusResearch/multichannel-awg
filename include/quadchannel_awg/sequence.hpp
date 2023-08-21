@@ -38,6 +38,7 @@ void from_json(const nlohmann::json j, sequence_point& sp);
 struct sequencer_data
 {
     using filemap_t = std::unordered_map<std::string, segment_spec>;
+    std::unordered_map<size_t, std::vector<sequence_point>> used_channels;
     sequencer_data(const nlohmann::json& data);
     nlohmann::json def;
     filemap_t filemap;

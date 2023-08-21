@@ -10,13 +10,43 @@
 #include <uhd/types/time_spec.hpp>
 #include <uhd/usrp/multi_usrp.hpp>
 #include <fmt/format.h>
+#include <cmath>
+#include <fstream>
+#include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 host_awg::host_awg(const std::string& address) : awg_base(address) {}
-host_awg::~host_awg()
+
+bool host_awg::load_program(std::unique_ptr<sequencer_data> dat)
 {
-    ;
+    sampling_rate = dat->sampling_rate;
+
+    size_t currsize = 0;
+    for (const auto& [id, seg] : dat->filemap) {
+        auto length        = seg.length;
+        buffer_offsets[id] = {currsize, length};
+        // reserve multiple of a large 64 kB page; 64 kB = 2⁶·2¹⁰
+        auto reservation_size = ((length >> 16) + 1) << 16;
+        buffer.resize((currsize + reservation_size) * dat->itemsize);
+        std::ifstream input_file(seg.filename.data(), std::ios::binary);
+        input_file.read(buffer.data() + currsize * dat->itemsize, length);
+        currsize += reservation_size;
+        fmt::print(
+            FMT_STRING(
+                "Appended {:L} B of data from file '{}' for segment '{}' to buffer\n"),
+            length * dat->itemsize,
+            seg.filename,
+            seg.name);
+    }
+    for (auto& [channel, sp_container] : dat->used_channels) {
+        program_counters.emplace(std::make_pair(
+            channel, sequencer_state{sp_container.begin(), sp_container.cend()}));
+    }
+    seq_data = std::move(dat);
+    return true;
 }
+
 bool host_awg::initialize()
 {
     fmt::print("Initializing host with address '{}'\n", address);
@@ -24,27 +54,21 @@ bool host_awg::initialize()
         usrp = uhd::usrp::multi_usrp::make(address);
         setup_clocking();
         sync_dance();
-
     } catch (const uhd::lookup_error& err) {
         fmt::print(err.what());
         return false;
     }
-    return true;
-}
-
-bool host_awg::load_program(sequencer_data& dat)
-{
-    for(const auto&[id, seg]: dat.filemap) 
-    {
+    for (auto& [channel, s_state] : program_counters) {
     }
     return true;
 }
+
 void host_awg::setup_clocking()
 {
     // We set the master clock source
     // TODO check whether samp rate is factor of master_clock_rate
     // usrp->set_master_clock_rate(200e6);
-    usrp->set_tx_rate(samp_rate);
+    usrp->set_tx_rate(sampling_rate);
 
     // We set the clock source of the 0. USRP to internal, all others
     // get the clock via clock distribution from that. Same for PPS.
@@ -80,4 +104,9 @@ void host_awg::sync_dance()
     // ms is  plenty of time to set the time on all devices
     // we uniformly add 2²⁰ to all times, giving us a bit of a headstart :)
     usrp->set_time_next_pps({(1ULL << 20), 0});
+}
+
+host_awg::~host_awg()
+{
+    ;
 }

@@ -36,11 +36,14 @@ sequencer_data::sequencer_data(const json& data) : def(data)
         fmt::print(FMT_STRING("segment \"{}\" from \"{}\"\n"),
             filespec.at("id"),
             filespec.at("sample_file"));
+        if (!std::filesystem::exists(filespec.at("sample_file"))) {
+            fmt::print(stderr, "file '{:s}' not found\n", filespec.at("sample_file"));
+            throw std::runtime_error("File Not Found");
+        }
         filemap[filespec.at("id")] = {filespec.at("id"),
             filespec.at("sample_file"),
             std::filesystem::file_size(filespec.at("sample_file")) / itemsize};
     }
-    std::unordered_map<size_t, std::vector<sequence_point>> used_channels;
 
     for (const auto& entry : data.at("sequence")) {
         auto sp = entry.get<sequence_point>();

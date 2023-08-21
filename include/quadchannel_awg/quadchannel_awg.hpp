@@ -19,7 +19,7 @@ public:
     awg_base(const std::string& addr);
     
     //!\brief Overload this method; it's called before the hardware gets initialized
-    virtual bool load_program(sequencer_data& seq) = 0;
+    virtual bool load_program(std::unique_ptr<sequencer_data> seq) = 0;
 
     //!\brief Overload this method; initialize hardware here.
     virtual bool initialize()                      = 0;

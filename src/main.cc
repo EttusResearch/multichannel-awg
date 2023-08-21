@@ -8,6 +8,7 @@
 #include "quadchannel_awg/sequence.hpp"
 #include "CLI11/CLI11.hpp"
 #include <iostream>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -46,9 +47,12 @@ int main(int argc, char* argv[])
     } else {
         data = data.parse(std::ifstream(filename));
     }
-    sequencer_data sequencer_d(data);
-    if (!awg->initialize()) {
+    auto sequencer_d = std::make_unique<sequencer_data>(data);
+    if (!awg->load_program(std::move(sequencer_d))) {
         return -1;
+    }
+    if (!awg->initialize()) {
+        return -2;
     }
     return 0;
 }
