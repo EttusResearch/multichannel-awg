@@ -1,0 +1,41 @@
+{
+  "config": {
+    "sampling_rate": 10e6,
+    "data_fmt": "fc32",
+    "wire_fmt": "sc16"
+  },
+  "segments": [
+    {
+      "id": "first",
+      "sample_file": "100chirp_per_second.fc32"
+    },
+    {
+      "id": "second",
+      "sample_file": "2chirp_per_second.fc32"
+    }
+  ],
+  "sequence": [
+    {
+      "channel": 0,
+      "start_time": 5,
+      "segment": "first",
+      "repetitions": 5
+    },
+    {
+      "channel": 0,
+      "start_time": 6,
+      "segment": "second"
+    },
+    {
+      "channel": 0,
+      "start_time": 11.5,
+      "segment": "second"
+    },
+    {
+      "channel": 1,
+      "start_time": 6,
+      "segment": "first",
+      "repetitions": -1
+    }
+  ]
+}
