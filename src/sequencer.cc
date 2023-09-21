@@ -16,22 +16,9 @@
 
 using json = nlohmann::json;
 
-sequencer_data::sequencer_data(const json& data) : def(data)
+sequencer_data::sequencer_data(const json& data)
+    : def(data), settings(data.at("config").get<device_settings>())
 {
-    cpu_format = data.at("config").value("data_fmt", "");
-    cpu_format = data.at("config").value("wire_fmt", "");
-    if (cpu_format == "sc16") {
-        itemsize = 2 * 2;
-    } else if (cpu_format == "fc32") {
-        itemsize = 2 * 4;
-    } else {
-        fmt::print(stderr,
-            FMT_STRING("Unrecognized config->data_fmt key \"{}\", assuming fc32.\n"),
-            cpu_format);
-        itemsize = 2 * 4;
-    }
-    data.at("config").at("sampling_rate").get_to(sampling_rate);
-
     for (const auto& filespec : data.at("segments")) {
         fmt::print(FMT_STRING("segment \"{}\" from \"{}\"\n"),
             filespec.at("id"),
@@ -42,7 +29,8 @@ sequencer_data::sequencer_data(const json& data) : def(data)
         }
         filemap[filespec.at("id")] = {filespec.at("id"),
             filespec.at("sample_file"),
-            std::filesystem::file_size(filespec.at("sample_file")) / itemsize};
+            std::filesystem::file_size(filespec.at("sample_file"))
+                / static_cast<size_t>(settings.cpu_format)};
     }
 
     for (const auto& entry : data.at("sequence")) {
@@ -84,9 +72,9 @@ sequencer_data::sequencer_data(const json& data) : def(data)
                 break;
             }
             try {
-                next_start_earliest =
-                    sp.start_time
-                    + sp.repetitions * filemap.at(sp.segment).length / sampling_rate;
+                next_start_earliest = sp.start_time
+                                      + sp.repetitions * filemap.at(sp.segment).length
+                                            / settings.sampling_rate;
             } catch (const std::out_of_range& err) {
                 fmt::print(stderr,
                     FMT_STRING("Channel {}, Segment {}, {}\n"),
@@ -96,11 +84,4 @@ sequencer_data::sequencer_data(const json& data) : def(data)
             }
         }
     }
-}
-void from_json(const nlohmann::json j, sequence_point& sp)
-{
-    j.at("channel").get_to(sp.channel);
-    j.at("start_time").get_to(sp.start_time);
-    sp.repetitions = j.value("repetitions", 0);
-    j.at("segment").get_to(sp.segment);
 }

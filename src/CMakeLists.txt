@@ -5,6 +5,7 @@
 add_executable(quadchannel_awg
     awg_base.cc
     host_awg.cc
+    json_helpers.cc
     main.cc 
     quadchannel_awg.cc 
     sequencer.cc

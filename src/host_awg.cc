@@ -6,6 +6,7 @@
  */
 #include "quadchannel_awg/host_awg.hpp"
 #include "quadchannel_awg/quadchannel_awg.hpp"
+#include "quadchannel_awg/sequence.hpp"
 #include <uhd/exception.hpp>
 #include <uhd/types/time_spec.hpp>
 #include <uhd/usrp/multi_usrp.hpp>
@@ -21,7 +22,7 @@ host_awg::host_awg(const std::string& address) : awg_base(address) {}
 bool host_awg::load_program(std::unique_ptr<sequencer_data> dat)
 {
     seq_data      = std::move(dat);
-    sampling_rate = seq_data->sampling_rate;
+    sampling_rate = seq_data->settings.sampling_rate;
 
     size_t currsize = 0;
     for (const auto& [id, seg] : seq_data->filemap) {
@@ -29,14 +30,15 @@ bool host_awg::load_program(std::unique_ptr<sequencer_data> dat)
         buffer_offsets[id] = {currsize, length};
         // reserve multiple of a large 64 kB page; 64 kB = 2⁶·2¹⁰
         auto reservation_size = ((length >> 16) + 1) << 16;
-        buffer.resize((currsize + reservation_size) * seq_data->itemsize);
+        auto itemsize         = static_cast<size_t>(seq_data->settings.cpu_format);
+        buffer.resize((currsize + reservation_size) * itemsize);
         std::ifstream input_file(seg.filename.data(), std::ios::binary);
-        input_file.read(buffer.data() + currsize * seq_data->itemsize, length);
+        input_file.read(buffer.data() + currsize * itemsize, length);
         currsize += reservation_size;
         fmt::print(
             FMT_STRING(
                 "Appended {:L} B of data from file '{}' for segment '{}' to buffer\n"),
-            length * seq_data->itemsize,
+            length * itemsize,
             seg.filename,
             seg.name);
     }
@@ -77,12 +79,17 @@ void host_awg::setup_clocking()
 
     // We set the clock source of the 0. USRP to internal, all others
     // get the clock via clock distribution from that. Same for PPS.
-    usrp->set_clock_source("internal", 0);
+    std::string clk_source(seq_data->settings.clock_source == clock_source_e::EXTERNAL
+                               ? "external"
+                               : "internal");
+    usrp->set_clock_source(clk_source, 0);
     usrp->set_clock_source_out(true, 0);
     usrp->set_time_source("internal", 0);
     usrp->set_time_source_out(true, 0);
+
     auto count = usrp->get_num_mboards();
     for (unsigned counter = 1; counter < count; ++counter) {
+        // second and on must be fed from first one
         usrp->set_clock_source("external", counter);
         usrp->set_time_source("external", counter);
     }

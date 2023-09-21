@@ -22,7 +22,6 @@ int main(int argc, char* argv[])
     std::set<std::string> valid_otw_formats{"sc16", "sc8", "sc12"};
     std::string mode{"host"};
     std::string device_address;
-    std::string wire_format{"sc16"};
     std::string filename;
 
     app.add_option("-a,--address", device_address, "Device address to use");
@@ -30,9 +29,6 @@ int main(int argc, char* argv[])
         ->capture_default_str()
         ->transform(CLI::IsMember(valid_modes, CLI::ignore_case));
     app.add_option("-f,--file", filename, "Sequencer command file; defaults to stdin");
-    app.add_option("-w,--wire_format", wire_format, "Wire format")
-        ->capture_default_str()
-        ->transform(CLI::IsMember(valid_otw_formats, CLI::ignore_case));
 
     try {
         app.parse(argc, argv);
@@ -53,6 +49,9 @@ int main(int argc, char* argv[])
     }
     if (!awg->initialize()) {
         return -2;
+    }
+    if(!awg->start()) {
+        return -3;
     }
     return 0;
 }

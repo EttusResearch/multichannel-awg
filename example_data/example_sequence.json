@@ -2,7 +2,21 @@
   "config": {
     "sampling_rate": 10e6,
     "data_fmt": "fc32",
-    "wire_fmt": "sc16"
+    "wire_fmt": "sc16",
+    "clock_source": "internal",
+    "gain": [
+      32.0,
+      10.0
+    ],
+    "frequency": [
+      [
+        1e9,0
+      ],
+      [
+        2.45e9,
+        -10e6
+      ]
+    ]
   },
   "segments": [
     {
