@@ -12,20 +12,24 @@
 #include <string>
 #include <unordered_map>
 
-//!\brief base class for host, RFNoC, person-rapidly-cycling-floppy-disks-through-R&S-AWG,…
+/*!
+ * \brief base class for host, RFNoC,
+ * person-rapidly-cycling-floppy-disks-through-R&S-AWG,…
+ */
 class awg_base
 {
 public:
     awg_base(const std::string& addr);
-    
+
     //!\brief Overload this method; it's called before the hardware gets initialized
     virtual bool load_program(std::unique_ptr<sequencer_data> seq) = 0;
 
     //!\brief Overload this method; initialize hardware here.
-    virtual bool initialize()                      = 0;
+    virtual bool initialize() = 0;
 
     //!\brief Overload this method; this starts the transmitter
-    //virtual bool start()=0;
+    virtual bool start() = 0;
+
     virtual ~awg_base();
 
 protected:

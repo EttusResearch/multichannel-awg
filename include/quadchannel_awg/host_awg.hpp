@@ -17,15 +17,37 @@
 
 
 // fwd decl
-namespace uhd::usrp {
+namespace uhd {
+namespace usrp {
 class multi_usrp;
-}
+} // namespace usrp
+class tx_streamer;
+} // namespace uhd
+
+
+struct sequencer_state
+{
+public:
+    using sp_container = std::vector<sequence_point>;
+    sequencer_state(sp_container::iterator&& begin, sp_container::const_iterator&& end, sequencer_data* data)
+        : begin(begin), end(end), data(data)
+    {
+    }
+    sp_container::iterator begin;
+    sp_container::const_iterator end;
+    std::shared_ptr<uhd::tx_streamer> tx_streamer;
+    void operator()();
+    const sequencer_data* const data;
+};
+
 class host_awg : virtual public awg_base
 {
 public:
     host_awg(const std::string& address);
     bool load_program(std::unique_ptr<sequencer_data> seq) override;
     bool initialize() override;
+    bool start() override;
+
     virtual ~host_awg();
 
 private:
@@ -38,11 +60,5 @@ private:
 
     std::vector<char> buffer;
     std::unordered_map<std::string, std::tuple<size_t, size_t>> buffer_offsets;
-    struct sequencer_state
-    {
-        using sp_container = std::vector<sequence_point>;
-        sp_container::iterator begin;
-        sp_container::const_iterator end;
-    };
-    std::unordered_map<size_t, sequencer_state> program_counters;
+    std::unordered_map<size_t, sequencer_state> sequence_workers;
 };

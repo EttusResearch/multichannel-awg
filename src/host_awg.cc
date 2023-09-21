@@ -20,30 +20,30 @@ host_awg::host_awg(const std::string& address) : awg_base(address) {}
 
 bool host_awg::load_program(std::unique_ptr<sequencer_data> dat)
 {
-    sampling_rate = dat->sampling_rate;
+    seq_data      = std::move(dat);
+    sampling_rate = seq_data->sampling_rate;
 
     size_t currsize = 0;
-    for (const auto& [id, seg] : dat->filemap) {
+    for (const auto& [id, seg] : seq_data->filemap) {
         auto length        = seg.length;
         buffer_offsets[id] = {currsize, length};
         // reserve multiple of a large 64 kB page; 64 kB = 2⁶·2¹⁰
         auto reservation_size = ((length >> 16) + 1) << 16;
-        buffer.resize((currsize + reservation_size) * dat->itemsize);
+        buffer.resize((currsize + reservation_size) * seq_data->itemsize);
         std::ifstream input_file(seg.filename.data(), std::ios::binary);
-        input_file.read(buffer.data() + currsize * dat->itemsize, length);
+        input_file.read(buffer.data() + currsize * seq_data->itemsize, length);
         currsize += reservation_size;
         fmt::print(
             FMT_STRING(
                 "Appended {:L} B of data from file '{}' for segment '{}' to buffer\n"),
-            length * dat->itemsize,
+            length * seq_data->itemsize,
             seg.filename,
             seg.name);
     }
-    for (auto& [channel, sp_container] : dat->used_channels) {
-        program_counters.emplace(std::make_pair(
-            channel, sequencer_state{sp_container.begin(), sp_container.cend()}));
+    for (auto& [channel, sp_container] : seq_data->used_channels) {
+        sequence_workers.emplace(std::make_pair(channel,
+            sequencer_state{sp_container.begin(), sp_container.cend(), seq_data.get()}));
     }
-    seq_data = std::move(dat);
     return true;
 }
 
@@ -58,7 +58,12 @@ bool host_awg::initialize()
         fmt::print(err.what());
         return false;
     }
-    for (auto& [channel, s_state] : program_counters) {
+    return true;
+}
+
+bool host_awg::start()
+{
+    for (auto& [channel, s_state] : sequence_workers) {
     }
     return true;
 }
@@ -109,4 +114,23 @@ void host_awg::sync_dance()
 host_awg::~host_awg()
 {
     ;
+}
+
+void sequencer_state::operator()()
+{
+    auto buffersize = tx_streamer->get_max_num_samps();
+    while (begin != end) {
+        auto& current_sp = *begin;
+        auto data        = current_sp.segment;
+
+        if (current_sp.repetitions > 1) /* more than one repitition left*/
+        {
+            --current_sp.repetitions;
+        } else if (current_sp.repetitions < 1) /*loop endlessly*/
+        {
+            continue;
+        } else {
+            ++begin;
+        }
+    }
 }
