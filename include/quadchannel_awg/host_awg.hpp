@@ -29,13 +29,17 @@ struct sequencer_state
 {
 public:
     using sp_container = std::vector<sequence_point>;
-    sequencer_state(sp_container::iterator&& begin, sp_container::const_iterator&& end, sequencer_data* data)
-        : begin(begin), end(end), data(data)
+    sequencer_state(sp_container::iterator&& begin,
+        sp_container::const_iterator&& end,
+        sequencer_data* data,
+        const std::shared_ptr<uhd::usrp::multi_usrp>& usrp)
+        : begin(begin), end(end), usrp(usrp), data(data)
     {
     }
     sp_container::iterator begin;
     sp_container::const_iterator end;
     std::shared_ptr<uhd::tx_streamer> tx_streamer;
+    std::shared_ptr<uhd::usrp::multi_usrp> usrp;
     void operator()();
     const sequencer_data* const data;
 };
@@ -59,6 +63,5 @@ private:
     std::unique_ptr<sequencer_data> seq_data;
 
     std::vector<char> buffer;
-    std::unordered_map<std::string, std::tuple<size_t, size_t>> buffer_offsets;
     std::unordered_map<size_t, sequencer_state> sequence_workers;
 };

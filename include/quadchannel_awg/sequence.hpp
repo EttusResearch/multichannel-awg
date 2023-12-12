@@ -24,6 +24,8 @@ struct segment_spec
     std::string name;
     std::string filename;
     size_t length;
+    size_t start_idx;
+    char* data;
 };
 
 struct sequence_point

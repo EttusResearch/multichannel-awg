@@ -30,7 +30,9 @@ sequencer_data::sequencer_data(const json& data)
         filemap[filespec.at("id")] = {filespec.at("id"),
             filespec.at("sample_file"),
             std::filesystem::file_size(filespec.at("sample_file"))
-                / static_cast<size_t>(settings.cpu_format)};
+                / static_cast<size_t>(settings.cpu_format),
+            static_cast<size_t>(-1), /* Can't set start offset before loading */
+            nullptr};
     }
 
     for (const auto& entry : data.at("sequence")) {
