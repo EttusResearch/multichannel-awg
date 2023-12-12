@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  */
-#include "quadchannel_awg/host_awg.hpp"
+#include "multichannel_awg/host_awg.hpp"
 #include "fmt/core.h"
-#include "quadchannel_awg/quadchannel_awg.hpp"
-#include "quadchannel_awg/sequence.hpp"
+#include "multichannel_awg/multichannel_awg.hpp"
+#include "multichannel_awg/sequence.hpp"
 #include <uhd/exception.hpp>
 #include <uhd/stream.hpp>
 #include <uhd/types/metadata.hpp>
@@ -76,7 +76,7 @@ bool host_awg::initialize()
         setup_clocking();
         sync_dance();
     } catch (const uhd::lookup_error& err) {
-        fmt::print(err.what());
+        fmt::print(stderr, FMT_STRING("{}"), err.what());
         return false;
     }
     for (auto& [channel, seq_state] : sequence_workers) {

@@ -5,7 +5,7 @@
  *
  */
 #include "nlohmann/json_fwd.hpp"
-#include "quadchannel_awg/sequence.hpp"
+#include "multichannel_awg/sequence.hpp"
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
 #include <filesystem>

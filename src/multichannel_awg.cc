@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  */
-#include "quadchannel_awg/quadchannel_awg.hpp"
-#include "quadchannel_awg/host_awg.hpp"
+#include "multichannel_awg/multichannel_awg.hpp"
+#include "multichannel_awg/host_awg.hpp"
 // TODO include rfnoc awg
 #include <memory>
 #include <stdexcept>

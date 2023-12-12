@@ -51,7 +51,7 @@ section, a section that specifies paths and IDs for the segments to be used,
 and a sequence section, specifying which segment to play when on which channel
 (and with how many repetitions).
 
-You can run `quadchannel_awg -f example_sequence.json` from the `example_data`
+You can run `multichannel_awg -f example_sequence.json` from the `example_data`
 directory (if you run it from a different directory, correct the paths to the
 segments accordingly; full paths are allowed!).
 

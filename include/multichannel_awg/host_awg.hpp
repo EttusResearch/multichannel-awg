@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include "quadchannel_awg.hpp"
+#include "multichannel_awg.hpp"
 #include "sequence.hpp"
 #include <memory>
 #include <string>

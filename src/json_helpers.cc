@@ -5,7 +5,8 @@
  *
  */
 #include "nlohmann/detail/macro_scope.hpp"
-#include "quadchannel_awg/sequence.hpp"
+#include "multichannel_awg/sequence.hpp"
+#include <uhd/exception.hpp>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 
