@@ -5,6 +5,7 @@
  *
  */
 #include "quadchannel_awg/host_awg.hpp"
+#include "fmt/core.h"
 #include "quadchannel_awg/quadchannel_awg.hpp"
 #include "quadchannel_awg/sequence.hpp"
 #include <uhd/exception.hpp>
@@ -83,9 +84,19 @@ void host_awg::setup_clocking()
                                ? "external"
                                : "internal");
     usrp->set_clock_source(clk_source, 0);
-    usrp->set_clock_source_out(true, 0);
+    try {
+        usrp->set_clock_source_out(true, 0);
+    } catch (const uhd::runtime_error& e) {
+        fmt::print(FMT_STRING("Setting clock out not supported on this device ({})\n"),
+            e.what());
+    }
     usrp->set_time_source("internal", 0);
-    usrp->set_time_source_out(true, 0);
+    try {
+        usrp->set_time_source_out(true, 0);
+    } catch (const uhd::runtime_error& e) {
+        fmt::print(
+            FMT_STRING("Setting time out not supported on this device ({})\n"), e.what());
+    }
 
     auto count = usrp->get_num_mboards();
     for (unsigned counter = 1; counter < count; ++counter) {
