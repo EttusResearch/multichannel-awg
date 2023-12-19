@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <atomic>
 
 
 // fwd decl
@@ -47,7 +48,7 @@ public:
 class host_awg : virtual public awg_base
 {
 public:
-    host_awg(const std::string& address);
+    host_awg(const std::string& address, const std::atomic<bool>& stop);
     bool load_program(std::unique_ptr<sequencer_data> seq) override;
     bool initialize() override;
     bool start() override;

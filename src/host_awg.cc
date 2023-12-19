@@ -25,11 +25,12 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <atomic>
 
 
 constexpr unsigned int time_offset = (1ULL << 20);
 
-host_awg::host_awg(const std::string& address) : awg_base(address) {}
+host_awg::host_awg(const std::string& address, const std::atomic<bool>& stop) : awg_base(address, stop) {}
 
 bool host_awg::load_program(std::unique_ptr<sequencer_data> dat)
 {

@@ -11,6 +11,15 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <thread>
+#include <csignal>
+#include <atomic>
+
+std::atomic<bool> stop(false);
+
+void signal_handler(int) {
+    stop.store(true);
+}
 
 int main(int argc, char* argv[])
 {
@@ -35,8 +44,11 @@ int main(int argc, char* argv[])
     } catch (const CLI::ParseError& err) {
         return app.exit(err);
     }
+
+    std::signal(SIGINT, &signal_handler);
+
     // TODO use mode arg
-    auto awg = awg_factory().make(mode, device_address);
+    auto awg = awg_factory().make(mode, device_address, stop);
     nlohmann::json data;
     if (filename.empty()) {
         std::cin >> data;
