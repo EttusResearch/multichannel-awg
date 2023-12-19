@@ -347,7 +347,8 @@ void rfnoc_awg::transmit_sequences()
         const auto replay_graph = replay_graphs.at(channel);
         const auto replay_ctrl = replay_graph.replay_ctrl;
 
-        for (const auto& seq_point : seq_points) {
+        for (size_t i = 0; i < seq_points.size(); ++i) {
+            const auto seq_point = seq_points.at(i);
             const auto sspec = seq_data->filemap.at(seq_point.segment);
 
             const uint64_t replay_buff_addr = sspec.start_idx*static_cast<int>(seq_data->settings.wire_format);
@@ -360,27 +361,31 @@ void rfnoc_awg::transmit_sequences()
                 stream_cmd.time_spec = time_spec;
                 stream_cmd.stream_now = false;
 
-                fmt::print(FMT_STRING("Chan {} -- Time: {}, Num Samples {}, Replay Addr: {}, Length(): {}\n"), channel, time_spec.get_real_secs(), replay_buff_size_samples, replay_buff_addr, replay_buff_size_bytes);
+                fmt::print(FMT_STRING("Chan {} -- Time: {}, Num Samples {}, Replay Addr: {}\n"), channel, time_spec.get_real_secs(), replay_buff_size_samples, replay_buff_addr);
                 replay_ctrl->config_play(replay_buff_addr, replay_buff_size_bytes, replay_graph.replay_port);
                 replay_ctrl->issue_stream_cmd(stream_cmd, replay_graph.replay_port);
             }
             else {
+                auto reps_left = seq_point.repetitions + 1;
                 replay_ctrl->config_play(replay_buff_addr, replay_buff_size_bytes, replay_graph.replay_port);
-                for (int i = 0; i < seq_point.repetitions; i++) {
+                do {
                     uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_MORE);
-                    if (i == seq_point.repetitions-1) {
+                    // Last sequence point
+                    if ((reps_left == 1) && (i == seq_points.size()-1)) {
                         stream_cmd.stream_mode = uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_DONE;
                     }
                     stream_cmd.num_samps = replay_buff_size_samples;
                     stream_cmd.stream_now = false;
                     stream_cmd.time_spec = time_spec;
 
-                    fmt::print(FMT_STRING("Chan {} -- Time: {}, Num Samples {}, Addr: {}, Length: {}\n"), channel, time_spec.get_real_secs(), replay_buff_size_samples, replay_buff_addr, replay_buff_size_bytes);
+                    fmt::print(FMT_STRING("Chan {} -- Time: {}, Num Samples {}, Replay Addr: {}\n"), channel, time_spec.get_real_secs(), replay_buff_size_samples, replay_buff_addr);
                     replay_ctrl->issue_stream_cmd(stream_cmd, replay_graph.replay_port);
 
                     double time_increment = static_cast<double>(replay_buff_size_samples)/seq_data->settings.sampling_rate;
                     time_spec += uhd::time_spec_t(time_increment);
-                }
+
+                    reps_left--;
+                } while (reps_left > 0);
             }
         }
     }
