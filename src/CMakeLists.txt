@@ -5,6 +5,7 @@
 add_executable(multichannel_awg
     awg_base.cc
     host_awg.cc
+    rfnoc_awg.cc
     json_helpers.cc
     main.cc 
     multichannel_awg.cc 
