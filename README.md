@@ -49,7 +49,7 @@ cpack -G
 Look at `example_data/example_sequence.json`; the file contains a configuration
 section, a section that specifies paths and IDs for the segments to be used,
 and a sequence section, specifying which segment to play when on which channel
-(and with how many repetitions).
+(and with how many repetitions). 
 
 You can run `multichannel_awg -f example_sequence.json` from the `example_data`
 directory (if you run it from a different directory, correct the paths to the
@@ -58,3 +58,6 @@ segments accordingly; full paths are allowed!).
 To produce example data, the `tools/` directory contains the
 `generate_chirps.py` tool, which is a GNU Radio program generated from the GRC
 flow graph `generatechirps.grc`. 
+
+To run the RFNoC version, use `multichannel_awg -f example_sequence.json --mode
+rfnoc`.
